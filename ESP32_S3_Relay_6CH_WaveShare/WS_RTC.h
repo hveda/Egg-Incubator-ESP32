@@ -4,10 +4,9 @@
 #include <NTPClient.h>
 #include <WiFiUdp.h>
 #include "WS_GPIO.h"
-#include "WS_Information.h"
+
 
 extern bool Relay_Flag[6];                    // Relay current status flag
-extern NTPClient timeClient;
 
 #define RTC_Flag              1               // RTC Timing Switcher flag
 #define RTC_OPEN_Time_Hour    16              // Time when the timing switch is enabled
@@ -18,7 +17,7 @@ extern NTPClient timeClient;
 #define DS3231_I2C_ADDR 0x68
 #define I2C_SDA 4
 #define I2C_SCL 5
-
+#define GPIO_PIN_SENSOR 3
 
 #define RTC_OPEN_Hour    (RTC_OPEN_Time_Hour%10   + RTC_OPEN_Time_Hour  /10*16)               // RTC Timing Switcher flag
 #define RTC_OPEN_Min     (RTC_OPEN_Time_Min%10    + RTC_OPEN_Time_Min   /10*16)               // RTC Timing Switcher flag

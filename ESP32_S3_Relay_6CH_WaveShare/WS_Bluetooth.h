@@ -5,7 +5,7 @@
 #include <BLEServer.h>
 #include "WS_GPIO.h"
 #include "WS_Serial.h"
-#include "WS_Information.h"
+#include "WS_Config.h"
 
 #define SERVICE_UUID "4fafc201-1fb5-459e-8fcc-c5c9c331914b"                     // UUID of the server
 #define RX_CHARACTERISTIC_UUID  "beb5483e-36e1-4688-b7f5-ea07361b26a8"          // UUID of the characteristic Tx

@@ -16,8 +16,6 @@
 #define Extension_ALL_ON    9     // Expansion ALL ON
 #define Extension_ALL_OFF   10    // Expansion ALL OFF
 
-
-
 extern void Relay_Analysis(uint8_t *buf,uint8_t Mode_Flag);
 
 void SetData(uint8_t* data, size_t length);   // Send data from the RS485

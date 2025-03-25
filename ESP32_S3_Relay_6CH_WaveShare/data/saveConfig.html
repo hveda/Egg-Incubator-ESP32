@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adjust Config</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f0f0f0;
+        }
+        .container {
+            width: 90%;
+            max-width: 500px;
+            margin-top: 50px;
+            padding: 20px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+        }
+        input, select {
+            width: 100%;
+            margin: 10px 0;
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            display: block;
+            width: 100%;
+            margin-top: 20px;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background: #333;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #555;
+        }
+        .error {
+            color: red;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Adjust Config</h1>
+        <form id="config-form">
+            <label for="STASSID">Wi-Fi SSID:</label>
+            <input type="text" id="STASSID">
+
+            <label for="STAPSK">Wi-Fi Password:</label>
+            <input type="text" id="STAPSK">
+
+            <label for="WIFI_Enable">Enable Wi-Fi:</label>
+            <select id="WIFI_Enable">
+                <option value="1">Yes</option>
+                <option value="0">No</option>
+            </select>
+
+            <label for="Extension_Enable">Enable Extension:</label>
+            <select id="Extension_Enable">
+                <option value="1">Yes</option>
+                <option value="0">No</option>
+            </select>
+
+            <label for="RTC_Enable">Enable RTC:</label>
+            <select id="RTC_Enable">
+                <option value="1">Yes</option>
+                <option value="0">No</option>
+            </select>
+
+            <label>Target Temperature (°C):</label>
+            <input type="number" id="targetTemperature" step="0.1">
+
+            <label>Target Humidity (%):</label>
+            <input type="number" id="targetHumidity" step="0.1">
+
+            <label>Temperature Hysteresis (°C):</label>
+            <input type="number" id="tempHysteresis" step="0.1">
+
+            <label>Humidity Hysteresis (%):</label>
+            <input type="number" id="humHysteresis" step="0.1">
+
+            <label>Roller Interval (hours):</label>
+            <input type="number" id="rollerInterval">
+
+            <button type="button" onclick="saveConfig()">Save</button>
+        </form>
+    </div>
+    <script>
+        // Load existing config
+        fetch('/getConfig')
+            .then(response => response.json())
+            .then(config => {
+                document.getElementById('STASSID').value = config.STASSID;
+                document.getElementById('STAPSK').value = config.STAPSK;
+                document.getElementById('WIFI_Enable').value = config.WIFI_Enable;
+                document.getElementById('Extension_Enable').value = config.Extension_Enable;
+                document.getElementById('RTC_Enable').value = config.RTC_Enable;
+                document.getElementById('targetTemperature').value = config.targetTemperature;
+                document.getElementById('targetHumidity').value = config.targetHumidity;
+                document.getElementById('tempHysteresis').value = config.tempHysteresis;
+                document.getElementById('humHysteresis').value = config.humHysteresis;
+                document.getElementById('rollerInterval').value = config.rollerInterval;
+            })
+            .catch(err => console.error(`Failed to load config: ${err}`));
+
+        // Save updated config
+        function saveConfig() {
+            const config = {
+                STASSID: document.getElementById('STASSID').value,
+                STAPSK: document.getElementById('STAPSK').value,
+                WIFI_Enable: parseInt(document.getElementById('WIFI_Enable').value),
+                Extension_Enable: parseInt(document.getElementById('Extension_Enable').value),
+                RTC_Enable: parseInt(document.getElementById('RTC_Enable').value),
+                targetTemperature: parseFloat(document.getElementById('targetTemperature').value),
+                targetHumidity: parseFloat(document.getElementById('targetHumidity').value),
+                tempHysteresis: parseFloat(document.getElementById('tempHysteresis').value),
+                humHysteresis: parseFloat(document.getElementById('humHysteresis').value),
+                rollerInterval: parseInt(document.getElementById('rollerInterval').value),
+            };
+
+            // Validate inputs
+            if (!validateInputs(config)) {
+                return;
+            }
+
+            fetch('/saveConfig', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(config),
+            })
+                .then(response => {
+                    if (response.ok) {
+                        alert('Configuration saved successfully!');
+                        window.location.href = '/';
+                    } else {
+                        alert('Failed to save configuration.');
+                    }
+                })
+                .catch(err => console.error(`Save failed: ${err}`));
+        }
+
+        // Validate configuration inputs
+        function validateInputs(config) {
+            let isValid = true;
+
+            if (!config.STASSID) {
+                alert('Wi-Fi SSID cannot be empty.');
+                isValid = false;
+            }
+            if (!config.STAPSK) {
+                alert('Wi-Fi Password cannot be empty.');
+                isValid = false;
+            }
+            if (config.targetTemperature < 30 || config.targetTemperature > 40) {
+                alert('Target Temperature must be between 30°C and 40°C.');
+                isValid = false;
+            }
+            if (config.targetHumidity < 40 || config.targetHumidity > 70) {
+                alert('Target Humidity must be between 40% and 70%.');
+                isValid = false;
+            }
+            if (config.tempHysteresis < 0.1 || config.tempHysteresis > 5) {
+                alert('Temperature Hysteresis must be between 0.1°C and 5°C.');
+                isValid = false;
+            }
+            if (config.humHysteresis < 1 || config.humHysteresis > 20) {
+                alert('Humidity Hysteresis must be between 1% and 20%.');
+                isValid = false;
+            }
+            if (config.rollerInterval < 1 || config.rollerInterval > 24) {
+                alert('Roller Interval must be between 1 and 24 hours.');
+                isValid = false;
+            }
+
+            return isValid;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+    "STASSID": "heri.life",
+    "STAPSK": "monicacitra",
+    "WIFI_Enable": 1,                   //Whether WIFI is enabled  .1:true    0:false
+    "Extension_Enable": 1,              // Whether to extend the connection to external devices   1:Expansion device Modbus RTU Relay    0:No extend
+    "RTC_Enable": 0,                   // Whether WIFI is enabled  .1:true    0:false
+    "targetTemperature": 37.5,
+    "targetHumidity": 55.0,
+    "tempHysteresis": 0.2,
+    "humHysteresis": 5.0,
+    "rollerInterval": 2
+  }
+  

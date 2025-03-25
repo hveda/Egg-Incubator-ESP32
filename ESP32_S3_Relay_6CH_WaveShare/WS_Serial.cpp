@@ -97,7 +97,8 @@ void RS485_Analysis(uint8_t *buf)
 }
 void Serial_Init()
 {
-  // Serial.begin(115200);                                  // Initializing serial port
+  Serial.begin(115200);                                  // Initializing serial port
+  delay(1000);            // Allow some time for Serial to start
   lidarSerial.begin(115200, SERIAL_8N1, RXD1, TXD1);        // Initializing serial port
 }
 

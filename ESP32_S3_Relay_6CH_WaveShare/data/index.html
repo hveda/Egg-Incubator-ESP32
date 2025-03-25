@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32-S3 Relay Control</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+        }
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            background-color: #333;
+            color: #fff;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .button-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            background-color: #333;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #555;
+        }
+        #rtc-time, #sensor-data, #relay-status {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 18px;
+            color: #333;
+        }
+        #error-log {
+            margin-top: 20px;
+            text-align: center;
+            color: red;
+            font-size: 14px;
+        }
+        #error-log p {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>ESP32-S3 Relay Control</h1>
+    </div>
+    <div id="relay-status">
+        <p>Fetching relay statuses...</p>
+    </div>    
+    <div class="container">
+        <div class="button-container">
+            <button onclick="controlRelay(1)">Toggle Relay 1</button>
+            <button onclick="controlRelay(2)">Toggle Relay 2</button>
+            <button onclick="controlRelay(3)">Toggle Relay 3</button>
+            <button onclick="controlRelay(4)">Toggle Relay 4</button>
+            <button onclick="controlRelay(5)">Toggle Relay 5</button>
+            <button onclick="controlRelay(6)">Toggle Relay 6</button>
+            <button onclick="controlRelay('all_on')">Turn All On</button>
+            <button onclick="controlRelay('all_off')">Turn All Off</button>
+            <button onclick="window.location.href='/saveConfig.html'">Adjust Config</button>
+        </div>
+        <div id="rtc-time">Fetching RTC time...</div>
+        <div id="sensor-data">Fetching sensor data...</div>
+        <div id="error-log"></div>
+    </div>
+    <script>
+        const logQueue = []; // Store up to the last 10 log messages
+
+        // Function to send relay control commands
+        function controlRelay(relay) {
+            let url;
+            if (relay === 'all_on') {
+                url = '/AllOn';
+            } else if (relay === 'all_off') {
+                url = '/AllOff';
+            } else {
+                url = `/Switch${relay}`;
+            }
+            fetch(url)
+                .then(response => {
+                    if (response.ok) {
+                        console.log(`Relay ${relay} command sent successfully`);
+                    } else {
+                        console.error(`Error sending relay ${relay} command`);
+                        logError(`Failed to send command for Relay ${relay}`);
+                    }
+                })
+                .catch(err => {
+                    console.error(`Fetch error: ${err}`);
+                    logError(`Network error while sending Relay ${relay} command`);
+                });
+        }
+
+        // Function to fetch RTC time and display it
+        function updateRTCTime() {
+            fetch('/getData')
+                .then(response => response.json())
+                .then(data => {
+                    const rtcElement = document.getElementById('rtc-time');
+                    rtcElement.innerHTML = `
+                        <p>Time: ${data.time}</p>
+                        <p>Date: ${data.date}</p>
+                        <p>Day: ${data.day}</p>
+                    `;
+                })
+                .catch(err => {
+                    console.error(`Failed to fetch RTC data: ${err}`);
+                    document.getElementById('rtc-time').innerText = 'Failed to fetch RTC time';
+                    logError('Failed to fetch RTC time data');
+                });
+        }
+
+        // Function to fetch sensor data and display it
+        function updateSensorData() {
+            fetch('/getSensorData')
+                .then(response => response.json())
+                .then(data => {
+                    const sensorElement = document.getElementById('sensor-data');
+                    sensorElement.innerHTML = `
+                        <p>Temperature: ${data.temperature} °C</p>
+                        <p>Humidity: ${data.humidity} %</p>
+                    `;
+                })
+                .catch(err => {
+                    console.error(`Failed to fetch sensor data: ${err}`);
+                    document.getElementById('sensor-data').innerText = 'Failed to fetch sensor data';
+                    logError('Failed to fetch sensor data');
+                });
+        }
+
+        // Function to fetch relay statuses and display them
+        function updateRelayStatus() {
+            fetch('/getRelayStatus')
+                .then(response => response.json())
+                .then(data => {
+                    const relayElement = document.getElementById('relay-status');
+                    relayElement.innerHTML = `
+                        <p>Relay 1: ${data.relay1 ? 'ON' : 'OFF'}</p>
+                        <p>Relay 2: ${data.relay2 ? 'ON' : 'OFF'}</p>
+                        <p>Relay 3: ${data.relay3 ? 'ON' : 'OFF'}</p>
+                        <p>Relay 4: ${data.relay4 ? 'ON' : 'OFF'}</p>
+                        <p>Relay 5: ${data.relay5 ? 'ON' : 'OFF'}</p>
+                        <p>Relay 6: ${data.relay6 ? 'ON' : 'OFF'}</p>
+                    `;
+                })
+                .catch(err => {
+                    console.error('Failed to fetch relay statuses:', err);
+                    document.getElementById('relay-status').innerText = 'Failed to fetch relay statuses.';
+                    logError('Failed to fetch relay status data');
+                });
+        }
+
+        // Function to log errors and keep only the last 10 events
+        function logError(message) {
+            const errorLog = document.getElementById('error-log');
+            const timestamp = new Date().toLocaleTimeString();
+
+            // Add the new message to the queue
+            logQueue.push(`${timestamp} - ${message}`);
+            if (logQueue.length > 10) {
+                logQueue.shift(); // Remove the oldest message if queue exceeds 10
+            }
+
+            // Update the error log display
+            errorLog.innerHTML = logQueue.map(msg => `<p>${msg}</p>`).join('');
+        }
+
+        // Refresh RTC time, sensor data, and relay statuses every second
+        setInterval(updateRTCTime, 1000);
+        setInterval(updateSensorData, 1000);
+        setInterval(updateRelayStatus, 1000);
+    </script>
+</body>
+</html>
