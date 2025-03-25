@@ -1,10 +1,13 @@
+#include "FS.h"
+#include "SPIFFS.h"
 #include "WS_WIFI.h"
 #include "WS_Bluetooth.h"
 #include "WS_GPIO.h"
 #include "WS_Serial.h"
 #include "WS_RTC.h"
-#include "SensorHandler.h"
-
+#include "WS_Sensors.h"
+#include "WS_Config.h"
+#include "WS_Information.h"
 
 #define CH1 '1'                 // CH1 Enabled Instruction
 #define CH2 '2'                 // CH2 Enabled Instruction
@@ -25,7 +28,15 @@ extern bool WIFI_Connection;
 bool Relay_Flag[6] = {0};       // Relay current status flag
 uint32_t Simulated_time=0;      // Analog time counting
 
-       
+/******************************************* SPIFFS Initialization ********************************************/
+void initSPIFFS() {
+  if (!SPIFFS.begin(true)) {
+    Serial.println("Failed to mount SPIFFS");
+    return;
+  }
+  Serial.println("SPIFFS mounted successfully");
+}
+
 /********************************************************  Data Analysis  ********************************************************/
 void Relay_Analysis(uint8_t *buf,uint8_t Mode_Flag)
 {
@@ -122,26 +133,29 @@ void Relay_Analysis(uint8_t *buf,uint8_t Mode_Flag)
 
 /********************************************************  Initializing  ********************************************************/
 void setup() {
-// UART
-  Serial_Init();   
+  // UART
+  Serial_Init();
+  // Initialize SPIFFS
+  initSPIFFS();
+  Config_Init();
 
-// Relay . RGB . Buzzer GPIO
-  GPIO_Init();      
-
-// RTC
+  // Relay . RGB . Buzzer GPIO
+  GPIO_Init();
+  // RTC
   if(RTC_Enable)
   {
     RTC_Init();
-  }             
-
-// Bluetooth
+  }
+  // Initialize sensors
+  Sensors_Init();
+  // Bluetooth
   Bluetooth_Init();  
 
-// WIFI
+  // WIFI
   if(WIFI_Enable == 1)      // WIFI connection successful
     WIFI_Init();            
 
-// Obtain and synchronize network time
+  // Obtain and synchronize network time
   if(WIFI_Connection == 1 && RTC_Enable == 1){
     Acquisition_time();
   }
@@ -149,35 +163,32 @@ void setup() {
 
 /**********************************************************  While  **********************************************************/
 void loop() {
-// RS485 Receive Data
+  // RS485 Receive Data
   Serial_Loop();
   
-// Bluetooth Receive Data
+  // Bluetooth Receive Data
   // The operation after receiving the data is processed in Bluetooth.C
 
-// WIFI
-if(WIFI_Enable == 1)
-  WIFI_Loop();
+  // WIFI
+  if(config.WIFI_Enable == 1)
+    WIFI_Loop();
 
   Simulated_time++;
-// Send WIFI IP via Bluetooth
+  // Send WIFI IP via Bluetooth
   if(WIFI_Connection == 1){
-    if(Simulated_time % 1 == 0){
+    if(Simulated_time == 1000){
       Bluetooth_SendData(ipStr);        // The IP address that sends WIFI
     }
   }
-// RTC
-  if(RTC_Enable)
+  // RTC
+  if(config.RTC_Enable)
   {
-    if(Simulated_time % 1 == 0){
+    if(Simulated_time ==1000){
       RTC_Loop();
+      // Update_Sensor_Readings(); // Update and act on sensor readings
     }
   }
-  if(Simulated_time % 5 ==0){
-    // Read sensor data
-    readSensors();
-  }
-  if(Simulated_time == 5)
+  if(Simulated_time ==1000)
     Simulated_time = 0;
-  delay(1000);
+  
 }

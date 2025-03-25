@@ -4,7 +4,7 @@
 #include <WiFi.h>
 #include <WebServer.h> 
 #include "WS_GPIO.h"
-#include "WS_information.h"
+
 
 #define WIFI_Mode            3
 

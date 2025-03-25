@@ -37,7 +37,7 @@ class MyRXCallback : public BLECharacteristicCallbacks {
       }
       else if(rxValue.length() == 2)
       {
-        if(Extension_Enable)
+        if(config.Extension_Enable)
         {
           printf("%s\n", rxValue.c_str());                                      // Print output through the serial port       
           uint8_t* valueBytes = reinterpret_cast<uint8_t*>(const_cast<char*>(rxValue.c_str())); // Convert value to uint8 t*
